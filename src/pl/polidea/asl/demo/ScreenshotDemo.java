@@ -1,18 +1,38 @@
 package pl.polidea.asl.demo;
 
-import pl.polidea.asl.*;
+import pl.polidea.asl.IScreenshotProvider;
+import pl.polidea.asl.ScreenshotService;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources.NotFoundException;
-import android.os.*;
-import android.view.*;
-import android.widget.*;
-import android.graphics.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.mobclick.android.MobclickAgent;
 
 public class ScreenshotDemo extends Activity {
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		MobclickAgent.onResume(this);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		MobclickAgent.onPause(this);
+	}
 
 	/*
 	 * The ImageView used to display taken screenshots.
@@ -21,64 +41,65 @@ public class ScreenshotDemo extends Activity {
 
 	private ServiceConnection aslServiceConn = new ServiceConnection() {
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			// TODO Auto-generated method stub
 
 		}
 
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			aslProvider = IScreenshotProvider.Stub.asInterface(service);
 		}
 	};
 	private IScreenshotProvider aslProvider = null;
 
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		MobclickAgent.onError(this);
+		setContentView(R.layout.main);
 
-    /** Called when the activity is first created. */
-    @Override 
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+		imgScreen = (ImageView) findViewById(R.id.imgScreen);
+		Button btn = (Button) findViewById(R.id.btnTakeScreenshot);
+		btn.setOnClickListener(btnTakeScreenshot_onClick);
 
-        setContentView(R.layout.main);
+		// connect to ASL service
+		// Intent intent = new Intent(ScreenshotService.class.getName());
+		Intent intent = new Intent();
+		intent.setClass(this, ScreenshotService.class);
+		// intent.addCategory(Intent.ACTION_DEFAULT);
+		bindService(intent, aslServiceConn, Context.BIND_AUTO_CREATE);
+	}
 
-        imgScreen = (ImageView)findViewById(R.id.imgScreen);
-        Button btn = (Button)findViewById(R.id.btnTakeScreenshot); 
-        btn.setOnClickListener(btnTakeScreenshot_onClick); 
+	@Override
+	public void onDestroy() {
+		unbindService(aslServiceConn);
+		super.onDestroy();
+	}
 
-        // connect to ASL service
-        //Intent intent = new Intent(ScreenshotService.class.getName());
-        Intent intent = new Intent();
-        intent.setClass(this, ScreenshotService.class);
-        //intent.addCategory(Intent.ACTION_DEFAULT);
-        bindService (intent, aslServiceConn, Context.BIND_AUTO_CREATE);
-    }
+	private View.OnClickListener btnTakeScreenshot_onClick = new View.OnClickListener() {
 
-    @Override
-    public void onDestroy() {
-    	unbindService(aslServiceConn);
-    	super.onDestroy();
-    }
-
-
-    private View.OnClickListener btnTakeScreenshot_onClick = new View.OnClickListener() {
-
-		@Override
 		public void onClick(View v) {
 			try {
 				if (aslProvider == null)
-					Toast.makeText(ScreenshotDemo.this, R.string.n_a, Toast.LENGTH_SHORT).show();
+					Toast.makeText(ScreenshotDemo.this, R.string.n_a,
+							Toast.LENGTH_SHORT).show();
 				else if (!aslProvider.isAvailable())
-					Toast.makeText(ScreenshotDemo.this, R.string.native_n_a, Toast.LENGTH_SHORT).show();
+					Toast.makeText(ScreenshotDemo.this, R.string.native_n_a,
+							Toast.LENGTH_SHORT).show();
 				else {
 					String file = aslProvider.takeScreenshot();
 					if (file == null)
-						Toast.makeText(ScreenshotDemo.this, R.string.screenshot_error, Toast.LENGTH_SHORT).show();
+						Toast.makeText(ScreenshotDemo.this,
+								R.string.screenshot_error, Toast.LENGTH_SHORT)
+								.show();
 					else {
-						Toast.makeText(ScreenshotDemo.this, R.string.screenshot_ok, Toast.LENGTH_SHORT).show();
+						Toast.makeText(ScreenshotDemo.this,
+								R.string.screenshot_ok, Toast.LENGTH_SHORT)
+								.show();
 						Bitmap screen = BitmapFactory.decodeFile(file);
 						imgScreen.setImageBitmap(screen);
-						
+
 					}
 				}
 			} catch (NotFoundException e) {

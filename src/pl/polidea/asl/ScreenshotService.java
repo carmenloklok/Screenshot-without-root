@@ -59,7 +59,6 @@ public class ScreenshotService extends Service {
 	 */
 	private final IScreenshotProvider.Stub mBinder = new IScreenshotProvider.Stub() {
 
-		@Override
 		public String takeScreenshot() throws RemoteException {
 			try {
 				return ScreenshotService.this.takeScreenshot();
@@ -68,7 +67,6 @@ public class ScreenshotService extends Service {
 			}
 		}
 
-		@Override
 		public boolean isAvailable() throws RemoteException {
 			return isNativeRunning();
 		}
