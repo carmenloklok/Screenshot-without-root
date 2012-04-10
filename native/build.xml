@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project name="asl-native" default="build">
+	<property file="local.properties"/>
+	<property file="server.properties"/>
+	
+	<property name="C_FLAGS" value="-DDEBUG"/>
+	<property name="L_FLAGS" value="--static"/>
+	
+	<target name="compile">
+		<exec executable="${ARM_GCC}">
+		  <arg value="-c"/>
+		  <arg value="${C_FLAGS}"/>
+		  <arg value="fbshot.c"/>
+		  <arg value="-o"/>
+		  <arg value="fbshot.o"/>
+		</exec>
+		<exec executable="${ARM_GCC}">
+			<arg value="-c" />
+			<arg value="${C_FLAGS}"/>
+			<arg value="main.c"/>
+			<arg value="-o"/>
+			<arg value="main.o"/>
+		</exec>
+	</target>
+	
+	<target name="build" depends="compile">
+		<exec executable="${ARM_GCC}">
+			<arg value="${L_FLAGS}"/>
+			<arg value="fbshot.o"/>
+			<arg value="main.o"/>
+			<arg value="-o"/>
+			<arg value="asl-native"/>
+		</exec>
+	</target>
+	
+	<target name="clean">
+		<delete file="*.o" />
+		<delete file="asl-native"/>
+	</target>
+</project>
